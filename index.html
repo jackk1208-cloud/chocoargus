@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARGUS | Mi Dulce Artesano</title>
+  <style>
+    :root{--brown:#4b2e25;--cream:#fff8ef;--gold:#c58b45;--green:#2e7d4f;--red:#b33a3a;--muted:#756b66}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--cream);color:var(--brown)}
+    header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #eadfd5;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .brand{font-weight:800;font-size:22px}.brand span{color:var(--gold)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}button,select,input{font:inherit}
+    button{border:0;border-radius:10px;padding:10px 14px;cursor:pointer}.navbtn{background:#f3ebe4;color:var(--brown)}.navbtn.active{background:var(--brown);color:#fff}
+    main{max-width:1200px;margin:auto;padding:35px 5%}.hero{display:grid;grid-template-columns:1.5fr 1fr;gap:30px;align-items:center;padding:25px 0 45px}
+    .hero h1{font-size:clamp(35px,6vw,65px);margin:10px 0}.hero p{font-size:18px;line-height:1.6;color:var(--muted)}.hero-card{background:#ead6c3;border-radius:30px;padding:45px;text-align:center;font-size:70px}
+    .section-title{margin-bottom:20px}.section-title h2{font-size:32px;margin:5px 0}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+    .toolbar select,.toolbar input{border:1px solid #ddcec2;background:#fff;border-radius:10px;padding:11px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}.card{background:#fff;border:1px solid #eadfd5;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:9px;box-shadow:0 5px 20px #4b2e250b}
+    .card h3{margin:0;font-size:20px}.card p{color:var(--muted);line-height:1.4;min-height:42px}.tag{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase}.stock{font-weight:700}.available{color:var(--green)}.low{color:#a66b00}.out{color:var(--red)}
+    .primary{background:var(--brown);color:#fff}.secondary{background:#f3ebe4;color:var(--brown)}.primary:disabled{opacity:.45;cursor:not-allowed}
+    .admin{display:none}.admin.show{display:block}.client.hide{display:none}.panel{background:#fff;border:1px solid #eadfd5;border-radius:18px;padding:20px;margin-bottom:20px}.table-wrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;min-width:800px}th,td{text-align:left;padding:12px;border-bottom:1px solid #eee}th{background:#f7f0e9}
+    .status{padding:5px 8px;border-radius:20px;font-size:12px;font-weight:700;background:#eee}.status.green{background:#e3f3e9;color:var(--green)}.status.yellow{background:#fff1d1;color:#936100}.status.red{background:#f9e1e1;color:var(--red)}
+    .actions{display:flex;gap:7px;flex-wrap:wrap}.num{width:80px;padding:8px;border:1px solid #ddd;border-radius:8px}.notice{padding:12px;border-radius:10px;background:#fff4dd;margin:10px 0}
+    .cart{position:fixed;right:-420px;top:0;width:min(420px,100%);height:100%;background:#fff;z-index:30;box-shadow:-10px 0 30px #0002;padding:25px;transition:.25s;overflow:auto}.cart.open{right:0}.overlay{display:none;position:fixed;inset:0;background:#0006;z-index:20}.overlay.show{display:block}.cart-item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.qty{display:flex;gap:5px;align-items:center}.qty button{padding:5px 9px;background:#f3ebe4}
+    footer{text-align:center;padding:35px;color:var(--muted)}.hidden{display:none!important}
+    @media(max-width:750px){.hero{grid-template-columns:1fr}.hero-card{padding:25px}.admin-actions{flex-direction:column}}
+  <style>.price-box{padding:8px 0;display:flex;flex-direction:column;gap:4px}.price-box b{font-size:18px}.price-box small{color:#75675e}.cart-total{display:flex;justify-content:space-between;margin:18px 0;font-size:18px}</style>
+</head>
+<body>
+<header>
+  <div class="brand">ARGUS <span>Mi Dulce Artesano</span></div>
+  <nav>
+    <button class="navbtn active" id="clientBtn">🛍 Cliente</button>
+    <button class="navbtn" id="adminBtn">🔐 Administración</button>
+    <button class="secondary" id="cartBtn">🛒 Pedido (<span id="cartCount">0</span>)</button>
+  </nav>
+</header>
+
+<main>
+<section class="client" id="clientView">
+  <div class="hero">
+    <div><small>CHOCOTEJAS DULCE ARTESANO</small><h1>Un detalle dulce, hecho con cariño.</h1>
+    <p>Elige tus sabores favoritos. La disponibilidad se actualiza según el inventario interno.</p></div>
+    <div class="hero-card">🍫</div>
+  </div>
+  <div class="section-title"><small>CATÁLOGO</small><h2>Chocotejas disponibles</h2><p>Los productos sin stock o sin insumos no se pueden pedir.</p></div>
+  <div class="toolbar"><select id="categoryFilter"><option value="all">Todas las líneas</option></select><input id="search" placeholder="Buscar sabor..."></div>
+  <div class="grid" id="productGrid"></div>
+</section>
+
+<section class="admin" id="adminView">
+  <div class="section-title"><small>PANEL INTERNO</small><h2>Inventario y catálogo</h2><p>Controla stock, producción, insumos y qué sabores aparecen al cliente.</p></div>
+  <div class="panel">
+    <div class="actions">
+      <button class="primary" id="addProduction">➕ Registrar producción</button>
+      <button class="secondary" id="addSale">➖ Registrar venta</button>
+      <button class="secondary" id="exportCsv">📊 Exportar inventario CSV/Excel</button>
+      <button class="secondary" id="resetData">↩ Restablecer demo</button>
+    </div>
+    <div class="notice">Regla: <b>Clásicos</b> = disponibilidad habitual · <b>Rotación</b> = 24 h · <b>Gourmet</b> = 48 h · <b>Licores</b> = 5 días + cotización + disponibilidad de insumos.</div>
+  </div>
+  <div class="panel table-wrap">
+    <table><thead><tr><th>Sabor</th><th>Línea</th><th>Stock</th><th>Insumos</th><th>Anticipación</th><th>Catálogo</th><th>Acción</th></tr></thead>
+    <tbody id="inventoryBody"></tbody></table>
+  </div>
+</section>
+</main>
+
+<footer>ARGUS · Mi Dulce Artesano</footer>
+
+<aside class="cart" id="cartPanel">
+  <h2>🛒 Mi pedido <button class="secondary" id="closeCart" style="float:right">×</button></h2>
+  <div id="cartItems"></div><hr>
+  <button class="primary" id="sendWhatsapp" style="width:100%">Enviar pedido por WhatsApp</button>
+  <p style="color:#756b66">Al enviar, se abrirá WhatsApp con el detalle para que lo revises y lo envíes.</p>
+</aside><div class="overlay" id="overlay"></div>
+
+<script>
+const WHATSAPP_NUMBER = '51932872451';
+
+const data = [
+['Fresa','Clásicos','Manjar blanco de fresa natural y pecana.'],['Lúcuma','Clásicos','Manjar blanco de lúcuma natural y pecana.'],
+['Maracuyá','Clásicos','Manjar blanco de maracuyá natural y pecana.'],['Coco','Clásicos','Manjar de leche de coco natural y trocitos de coco.'],
+['Café','Clásicos','Manjar blanco de café con chocolate bitter y pecana.'],['Mango','Clásicos','Manjar blanco con reducción natural de mango y pecana.'],
+['Manjar blanco','Clásicos','Clásico manjar blanco con vainilla y crunch de pecana.'],['Maracumango','Clásicos','Fusión natural de mango y maracuyá con pecana.'],
+['Menta','Clásicos','Manjar blanco de infusión natural de menta y pecana.'],['Maní','Clásicos','Manjar de mantequilla de maní y maní tostado con pecana.'],
+['Pie de Limón','Clásicos','Manjar blanco de limón fresco, galleta y pecana.'],['Alfajor','Clásicos','Manjar blanco con galleta de alfajor triturada.'],['D’Oreo','Clásicos','Manjarblanco con galleta Oreo y crunch de pecana.'],
+['Arroz con leche','Rotación','Postre tradicional con canela y crunch de pecana.'],['Dulce de leche y sal de mar','Rotación','Dulce de leche repostero, mantequilla, sal de mar y pecana.'],
+['Nutella con avellanas','Rotación','Nutella cremosa, avellanas picadas y crunch de pecana.'],['Nutella casera','Rotación','Ganache cremosa de Nutella y avellanas con pecana.'],
+['Choco chips','Rotación','Ganache de chocolate blanco, galletas y pecana.'],['Caramelo salado','Rotación','Caramelo, crema, mantequilla y sal marina.'],
+['Beso de Moza','Rotación','Merengue con gelatina y vainilla sobre galleta.'],['Mango y coco','Rotación','Mango natural, leche condensada, coco rallado y pecana.'],
+['Cappuccino','Rotación','Leche, chocolate con leche, café y pecana.'],['Café cappuccino','Rotación','Ganache de chocolate y café instantáneo con pecana.'],
+['Naranja','Rotación','Manjar blanco con jugo y ralladura de naranja.'],['Piña','Rotación','Manjar blanco con reducción natural de piña y pecana.'],
+['Matcha','Gourmet','Ganache de chocolate blanco con té matcha y pecana.'],['Chocolate blanco con frambuesa','Gourmet','Ganache de chocolate blanco y frambuesa natural.'],
+['Cheesecake de frutos rojos','Gourmet','Crema de queso y frutos rojos.'],['Cheesecake de Limón','Gourmet','Queso crema, limón y pecana.'],
+['Pistacho','Gourmet','Manjar de pasta pura de pistacho y pistachos picados.'],['Frambuesa','Gourmet','Manjar con reducción natural de frambuesas.'],
+['Arándanos','Gourmet','Manjar con reducción natural de arándanos.'],['Cheesecake de Maracuyá','Gourmet','Queso crema, maracuyá, galleta y pecana.'],
+['Cheesecake de Fresa','Gourmet','Queso crema, fresa natural, galleta y pecana.'],['Cheesecake de Lúcuma','Gourmet','Queso crema, lúcuma natural, galleta y pecana.'],
+['Brigadeiro de Limón','Gourmet','Crema brigadeiro de limón, mantequilla y pecana.'],['Dúo silvestre','Gourmet','Manjar con moras, frambuesas y pecana.'],
+['Four Loko','Licores y Cócteles','Sabor especial con licor.'],['Vino','Licores y Cócteles','Vino tinto reducido, leche condensada, cacao y pecana.'],
+['Noche de Coco y Ron','Licores y Cócteles','Ganache de chocolate blanco con ron, coco y pecana.'],['Limoncello','Licores y Cócteles','Ganache de chocolate blanco con Limoncello y pecana.'],
+['Grand Marnier','Licores y Cócteles','Ganache de chocolate blanco con licor de naranja.'],['Espresso Sin Vergüenza','Licores y Cócteles','Ganache semiamargo con licor de café.'],
+['Chambord','Licores y Cócteles','Ganache de chocolate blanco con licor de frambuesa.'],['Amaretto','Licores y Cócteles','Ganache de chocolate blanco con Amaretto.'],
+['Baileys','Licores y Cócteles','Ganache de chocolate blanco con Baileys.'],['Doble Tentación al Pisco','Licores y Cócteles','Manjar con pasas al pisco y pecanas.'],
+['Algarrobina con licor','Licores y Cócteles','Algarrobina, leche condensada, mantequilla y licor.'],['Daiquirí de fresa con Pisco','Licores y Cócteles','Fresa, limón, pisco y leche condensada.'],
+['Cerezas al licor','Licores y Cócteles','Cerezas con licor, leche condensada y pecana.'],['Crema de Pisco','Licores y Cócteles','Suave manjar de pisco y leche evaporada.'],
+['Machu Picchu','Licores y Cócteles','Manjar tricolor con pisco, frutas y menta.'],['Mojito','Licores y Cócteles','Manjar de menta, limón, ron blanco y pecana.'],
+['Dulce vendimia','Licores y Cócteles','Manjar con reducción de vino dulce y canela.'],['Piña colada','Licores y Cócteles','Manjar de coco y piña al ron.'],
+['Maracuyá Sour','Licores y Cócteles','Manjar de maracuyá y pisco.'],['Antigua Reserva','Licores y Cócteles','Manjar con canela y pasas maceradas en ron.'],
+['Pecado Púrpura','Licores y Cócteles','Vodka de manzana verde y frutos rojos.'],['Delicia iqueña','Licores y Cócteles','Manjar a base de pisco.'],['Pisco Sour','Licores y Cócteles','Manjar blanco a base de pisco y limón.']
+];
+
+const rules={'Clásicos':'Sin anticipación especial','Rotación':'24 horas','Gourmet':'48 horas','Licores y Cócteles':'5 días + cotización'};
+const prices={'Clásicos':{unit:2,3:5,6:10,12:20},'Rotación':{unit:3,3:8,6:16,12:32},'Gourmet':{unit:3,3:8,6:16,12:32},'Licores y Cócteles':{unit:4,3:10,6:20,12:40}};
+function calcPrice(category,q){const p=prices[category];let total=0,r=q;for(const n of [12,6,3]){const k=Math.floor(r/n);total+=k*p[n];r-=k*n}return total+r*p.unit;}
+
+const key=s=>s.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+let products=JSON.parse(localStorage.getItem('argusProducts')||'null');
+if(!products) products=data.map(([name,category,description])=>({id:key(name),name,category,description,stock:36,insumos:true,visible:true,produccion:0,ventas:0}));
+let cart=JSON.parse(localStorage.getItem('argusCart')||'{}');
+
+function save(){localStorage.setItem('argusProducts',JSON.stringify(products));localStorage.setItem('argusCart',JSON.stringify(cart))}
+function status(p){if(!p.insumos)return ['Sin insumos','red'];if(p.stock<=0)return ['Agotado','red'];if(p.stock<=3)return ['Bajo stock','yellow'];return ['Disponible','green']}
+function renderCategories(){const f=document.getElementById('categoryFilter');f.innerHTML='<option value="all">Todas las líneas</option>'+Object.keys(rules).map(x=>`<option>${x}</option>`).join('')}
+function renderProducts(){
+ const q=document.getElementById('search').value.toLowerCase(), c=document.getElementById('categoryFilter').value;
+ const list=products.filter(p=>p.visible&&p.insumos&&p.stock>0&&(c==='all'||p.category===c)&&p.name.toLowerCase().includes(q));
+ document.getElementById('productGrid').innerHTML=list.map(p=>`<article class="card"><span class="tag">${p.category}</span><h3>${p.name}</h3><p>${p.description}</p><div class="price-box"><b>Desde S/ ${prices[p.category].unit.toFixed(2)}</b><small>3 × S/ ${prices[p.category][3]} · 6 × S/ ${prices[p.category][6]} · 12 × S/ ${prices[p.category][12]}</small></div><small>Pedido: ${rules[p.category]}</small><button class="primary" onclick="add('${p.id}')">Agregar al pedido</button></article>`).join('')||'<div class="panel">No hay sabores disponibles con esos filtros.</div>';
+}
+function renderAdmin(){
+ document.getElementById('inventoryBody').innerHTML=products.map(p=>{let [txt,cls]=status(p);return `<tr><td><b>${p.name}</b></td><td>${p.category}</td><td><input class="num" type="number" min="0" value="${p.stock}" onchange="setStock('${p.id}',this.value)"></td><td><button class="status ${p.insumos?'green':'red'}" onclick="toggleInsumo('${p.id}')">${p.insumos?'🟢 Disponible':'🔴 Falta insumo'}</button></td><td>${rules[p.category]}</td><td><button class="status ${p.visible?'green':'red'}" onclick="toggleVisible('${p.id}')">${p.visible?'🟢 Publicado':'🔴 Oculto'}</button></td><td><div class="actions"><button class="secondary" onclick="produce('${p.id}')">+ Producción</button><button class="secondary" onclick="sell('${p.id}')">− Venta</button></div><small class="status ${cls}">${txt}</small></td></tr>`}).join('');
+}
+function add(id){let p=products.find(x=>x.id===id);if(!p||p.stock<=0||!p.insumos)return;cart[id]=(cart[id]||0)+1;save();renderCart()}
+function change(id,d){let p=products.find(x=>x.id===id);cart[id]=Math.max(0,Math.min(p.stock,(cart[id]||0)+d));if(!cart[id])delete cart[id];save();renderCart()}
+function renderCart(){let entries=Object.entries(cart);document.getElementById('cartCount').textContent=entries.reduce((a,[,q])=>a+q,0);document.getElementById('cartItems').innerHTML=entries.length?entries.map(([id,q])=>{let p=products.find(x=>x.id===id);return `<div class="cart-item"><div><b>${p.name}</b><br><small>${p.category} · ${q} und. · S/ ${calcPrice(p.category,q).toFixed(2)}</small></div><div class="qty"><button onclick="change('${id}',-1)">−</button><b>${q}</b><button onclick="change('${id}',1)">+</button></div></div>`}).join('')+`<div class="cart-total"><b>Total estimado</b><b>S/ ${entries.reduce((a,[id,q])=>a+calcPrice(products.find(x=>x.id===id).category,q),0).toFixed(2)}</b></div>`:'<p>Tu pedido está vacío.</p>'}
+function setStock(id,v){let p=products.find(x=>x.id===id);p.stock=Math.max(0,Number(v));save();renderAll()}
+function toggleInsumo(id){let p=products.find(x=>x.id===id);p.insumos=!p.insumos;save();renderAll()}
+function toggleVisible(id){let p=products.find(x=>x.id===id);p.visible=!p.visible;save();renderAll()}
+function produce(id){let p=products.find(x=>x.id===id);let n=Number(prompt('¿Cuántas unidades produjiste?',10));if(n>0){p.stock+=n;p.produccion+=n;save();renderAll()}}
+function sell(id){let p=products.find(x=>x.id===id);let n=Number(prompt('¿Cuántas unidades vendiste?',1));if(n>0){p.stock=Math.max(0,p.stock-n);p.ventas+=n;save();renderAll()}}
+function exportCSV(){
+ const rows=[['Fecha','Sabor','Linea','Stock actual','Insumos','Publicado','Anticipacion','Producidas','Vendidas']];
+ const fecha=new Date().toLocaleDateString('es-PE');products.forEach(p=>rows.push([fecha,p.name,p.category,p.stock,p.insumos?'Disponible':'Falta insumo',p.visible?'Sí':'No',rules[p.category],p.produccion,p.ventas]));
+ const csv='\\ufeff'+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(';')).join('\\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`inventario_argus_${fecha.replaceAll('/','-')}.csv`;a.click();
+}
+function renderAll(){renderProducts();renderAdmin();renderCart()}
+document.getElementById('clientBtn').onclick=()=>{clientView.classList.remove('hide');adminView.classList.remove('show');clientBtn.classList.add('active');adminBtn.classList.remove('active')}
+document.getElementById('adminBtn').onclick=()=>{clientView.classList.add('hide');adminView.classList.add('show');adminBtn.classList.add('active');clientBtn.classList.remove('active')}
+document.getElementById('cartBtn').onclick=()=>{cartPanel.classList.add('open');overlay.classList.add('show')}
+document.getElementById('closeCart').onclick=()=>{cartPanel.classList.remove('open');overlay.classList.remove('show')}
+overlay.onclick=()=>{cartPanel.classList.remove('open');overlay.classList.remove('show')}
+document.getElementById('search').oninput=renderProducts;document.getElementById('categoryFilter').onchange=renderProducts;
+document.getElementById('addProduction').onclick=()=>{let p=prompt('Escribe el sabor exacto para registrar producción:');let x=products.find(v=>v.name.toLowerCase()===String(p).toLowerCase());if(x)produce(x.id);else alert('Sabor no encontrado.')}
+document.getElementById('addSale').onclick=()=>{let p=prompt('Escribe el sabor exacto para registrar venta:');let x=products.find(v=>v.name.toLowerCase()===String(p).toLowerCase());if(x)sell(x.id);else alert('Sabor no encontrado.')}
+document.getElementById('exportCsv').onclick=exportCSV;
+document.getElementById('resetData').onclick=()=>{if(confirm('¿Restablecer los datos de demostración?')){localStorage.removeItem('argusProducts');localStorage.removeItem('argusCart');location.reload()}}
+document.getElementById('sendWhatsapp').onclick=()=>{let entries=Object.entries(cart);if(!entries.length)return;let lines=entries.map(([id,q])=>{let p=products.find(x=>x.id===id);return `• ${q} x ${p.name}`});let msg=`Hola, quiero hacer este pedido de chocotejas ARGUS:\\n\\n${lines.join('\\n')}\\n\\nTotal estimado: S/ ${total.toFixed(2)}\n\nPor favor, confírmame disponibilidad y fecha de entrega.`;window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,'_blank')}
+renderCategories();renderAll();
+</script>
+</body>
+</html>
